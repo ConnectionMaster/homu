@@ -66,7 +66,13 @@ def lazy_debug(logger, f):
 def logged_call(args, env=None):
     print('* Running command: {}'.format(args))
     try:
-        subprocess.check_call(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
+        popen = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, env=env)
+        for stdout_line in iter(popen.stdout.readline, ""):
+          print(stdout_line.strip())
+        popen.stdout.close()
+        return_code = popen.wait()
+        if return_code:
+          raise subprocess.CalledProcessError(return_code, args)
     except subprocess.CalledProcessError:
         print('* Failed to execute command: {}'.format(args))
         raise
